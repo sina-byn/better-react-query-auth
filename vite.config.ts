@@ -9,24 +9,36 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   resolve: {
     extensions: ['.ts', '.tsx'],
+    alias: {
+      '@': resolve(__dirname, './src'),
+    },
   },
 
   publicDir: false,
 
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/lib/index.tsx'),
+      entry: resolve(__dirname, 'src/lib/index.ts'),
       formats: ['es'],
       fileName: `better-react-query-auth`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'react-dom/client',
+        '@tanstack/react-query',
+      ],
 
       // * UMD-only
       // output: {
       //   globals: {
       //     react: 'React',
       //     'react-dom': 'ReactDOM',
+      //     'react-dom/client': 'ReactDOM',  // Maps to same global
+      //     'react/jsx-runtime': 'ReactJSXRuntime',
+      //     '@tanstack/react-query': 'ReactQuery',
       //   },
       // },
     },
