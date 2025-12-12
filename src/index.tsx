@@ -16,21 +16,6 @@ import type {
   PartialAuthResolvers,
 } from '@/types';
 
-// const conf: AuthConfig<() => Promise<number>, { username: () => Promise<number> }> = {
-//   // login: { otp: () => Promise.resolve(1) },
-//   login: () => Promise.resolve(1),
-//   // signup: () => Promise.resolve(2),
-//   signup: { username: () => Promise.resolve(2) },
-//   resolvers: {
-//     singup: 'username',
-//   },
-// };
-
-// function createAuthHooks<T extends AuthFn>(config: AuthConfig<T>): AuthHooks<T>;
-// function createAuthHooks<T extends AuthFn>(config: AuthConfig<T>): AuthHooks<T>;
-// function createAuthHooks<T extends AuthFlow>(config: AuthConfig<T>): AuthHooks<T>;
-// function createAuthHooks<T extends AuthFlow>(config: AuthConfig<T>): AuthHooks<T>;
-
 export function createAuthHooks<
   T extends AuthHandler,
   U extends AuthHandler,
@@ -95,15 +80,3 @@ export function createAuthHooks<
     },
   } as AuthHooks<T, U, V, W>;
 }
-
-// const { useLogin, useSignup, useLogout, useUser } = createAuthHooks({
-//   login: (name: string) => Promise.resolve(1),
-//   signup: (username: string) => Promise.resolve(1),
-//   logout: (username: string) => Promise.resolve(1),
-//   user: () => Promise.resolve(1),
-// });
-
-// const _t = useLogin();
-// const _u = await _t.mutateAsync('sina');
-
-// const { data } = useUser();
