@@ -29,6 +29,10 @@
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
   },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^19.0.0"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
     "react": "^19.2.0",
