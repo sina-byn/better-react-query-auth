@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Compressed
+*.zip
+*.rar
+*.tar
+*.tar.gz
+*.tgz
