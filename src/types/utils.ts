@@ -1,5 +1,7 @@
 export type StrictOmit<T, K extends keyof T> = { [k in keyof T as k extends K ? never : k]: T[k] };
 
+export type NeverEmptyObject<T extends object> = keyof T extends never ? never : T;
+
 type Digit = Union<'0123456789'>;
 
 type Special = Lowercase<string> & Uppercase<string>;

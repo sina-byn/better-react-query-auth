@@ -8,29 +8,44 @@ import {
   type UseMutationOptions,
 } from '@tanstack/react-query';
 
-import type { StrictOmit, Alphanumeric } from './utils';
+import type { JSX } from 'react';
+import type { StrictOmit, Alphanumeric } from '@/types/utils';
 
 export type HookName = `use${string}`;
-export type AuthHookName<T extends string> = `use${Capitalize<Alphanumeric<T>>}`;
 
-export type AuthQueryFn<TData = any> = QueryFunction<TData, QueryKey>;
+export type AuthHookName<
+  T extends string,
+  U extends string = '',
+> = `use${Capitalize<Alphanumeric<U>>}${Capitalize<Alphanumeric<T>>}`;
 
-export type AuthMutationFlow = { [k: string]: AuthMutationFn };
-export type AuthMutationFn<TData = any, TVariables = any> = MutationFunction<TData, TVariables>;
+export type ReservedFlowKeys = 'login' | 'signup';
 
-export type AuthHandler = AuthMutationFn | AuthMutationFlow;
+export type MutationFn<TData = any, TVariables = any> = MutationFunction<TData, TVariables>;
 
-export type AuthQueryOptions = StrictOmit<UseQueryOptions, 'queryFn' | 'queryKey'>;
-export type AuthMutationOptions = StrictOmit<UseMutationOptions, 'mutationFn' | 'mutationKey'>;
+export type MutationFlow = {
+  [K in Exclude<string, ReservedFlowKeys>]: MutationFunction<any, any>;
+} & {
+  [K in ReservedFlowKeys]?: never;
+};
 
-export type QueryFactory<TData = any> = (options?: AuthQueryOptions) => UseQueryResult<TData>;
+export type QueryOptions<TData = unknown> = StrictOmit<
+  UseQueryOptions<TData, Error>,
+  'queryFn' | 'queryKey'
+>;
+
+export type QueryFactory<TData = any> = (options?: QueryOptions) => UseQueryResult<TData>;
+
+export type MutationOptions<TData = unknown, TVariables = unknown> = StrictOmit<
+  UseMutationOptions<TData, Error, TVariables>,
+  'mutationFn'
+>;
 
 export type MutationFactory<TData = any, TVariables = any> = (
-  options?: AuthMutationOptions,
+  options?: MutationOptions,
 ) => UseMutationResult<TData, Error, TVariables, unknown>;
 
-export type AuthFlowHooks<T extends AuthMutationFlow> = {
-  [K in keyof T as K extends string ? AuthHookName<K> : never]: T[K] extends AuthMutationFn<
+export type AuthFlowHooks<T extends MutationFlow, U extends string = ''> = {
+  [K in keyof T as K extends string ? AuthHookName<K, U> : never]: T[K] extends MutationFn<
     infer TData,
     infer TVariables
   >
@@ -38,53 +53,26 @@ export type AuthFlowHooks<T extends AuthMutationFlow> = {
     : never;
 };
 
-export type AuthActionHooks<T, K extends string> =
-  T extends AuthMutationFn<infer TData, infer TVariables>
-    ? { [k in K as AuthHookName<k>]: MutationFactory<TData, TVariables> }
-    : T extends AuthMutationFlow
-      ? AuthFlowHooks<T>
-      : never;
-
-export type AuthResolvers<T extends AuthHandler, U extends AuthHandler> = {
-  [K in 'resolvers' as T extends AuthMutationFn ? (U extends AuthMutationFn ? never : K) : K]: {
-    [K in 'login' as T extends AuthMutationFn ? never : K]: keyof T;
-  } & {
-    [K in 'singup' as U extends AuthMutationFn ? never : K]: keyof U;
-  };
-};
-
-export type PartialAuthResolvers = Partial<{
-  login: 'login' & (string & {});
-  signup: 'signup' & (string & {});
-}>;
-
-export type HookGroupConfig<T extends AuthMutationFlow> = {
-  userKey: QueryKey;
-  resolver: keyof T;
-};
-
-export type AuthHooks<
-  T extends AuthHandler,
-  U extends AuthHandler,
-  V extends AuthMutationFn,
-  W extends AuthQueryFn,
-> = AuthActionHooks<T, 'login'> &
-  AuthActionHooks<U, 'signup'> & {
-    useUser: W extends AuthQueryFn<infer TData> ? QueryFactory<TData> : never;
-    useLogout: V extends AuthMutationFn<infer TData, infer TVariables>
-      ? MutationFactory<TData, TVariables>
-      : never;
-  };
-
 export type AuthConfig<
-  T extends AuthHandler,
-  U extends AuthHandler,
-  V extends AuthMutationFn,
-  W extends AuthQueryFn,
+  TUser extends unknown,
+  TLogin,
+  TSignup,
+  TLoginFlow extends MutationFlow = never,
+  TSignupFlow extends MutationFlow = never,
 > = {
-  login: T;
-  signup: U;
-  logout: V;
-  user: W;
+  user: QueryFunction<TUser, QueryKey>;
+  login: MutationFn<TUser, TLogin>;
+  signup: MutationFn<TUser, TSignup>;
+  logout: MutationFn<unknown, unknown>;
   userKey?: QueryKey;
-} & AuthResolvers<T, U>;
+  loginFlow?: TLoginFlow;
+  signupFlow?: TSignupFlow;
+};
+
+export type AuthLoaderProps<TUser> = {
+  children: React.ReactNode;
+  renderLoading: () => JSX.Element;
+  renderUnauthenticated?: () => JSX.Element;
+  renderError?: (error: Error) => JSX.Element;
+  options?: QueryOptions<TUser | null>;
+};

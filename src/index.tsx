@@ -1,82 +1,125 @@
-import { useCallback } from 'react';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { mutationHooksForFlow } from '@/utils';
-import { DEFAULT_RESOLVERS } from '@/constants';
 
 import type {
-  AuthHooks,
   AuthConfig,
-  AuthQueryFn,
-  AuthHandler,
-  AuthMutationFn,
-  AuthActionHooks,
-  AuthMutationFlow,
-  PartialAuthResolvers,
+  QueryOptions,
+  MutationFlow,
+  MutationOptions,
+  AuthLoaderProps,
 } from '@/types';
 
+// * constants
+const LOGIN = 'login' as const;
+const SIGNUP = 'signup' as const;
+
 export function createAuthHooks<
-  T extends AuthHandler,
-  U extends AuthHandler,
-  V extends AuthMutationFn,
-  W extends AuthQueryFn,
->(config: AuthConfig<T, U, V, W>): AuthHooks<T, U, V, W> {
-  const { login, signup, logout, user, userKey = ['self'] } = config;
+  TUser extends unknown,
+  TLogin,
+  TSignup,
+  TLoginFlow extends MutationFlow = never,
+  TSignupFlow extends MutationFlow = never,
+>(config: AuthConfig<TUser, TLogin, TSignup, TLoginFlow, TSignupFlow>) {
+  const { user, login, signup, logout, userKey = ['current-user'] } = config;
 
-  const hasLoginFn = typeof login === 'function';
-  const hasSignupFn = typeof signup === 'function';
+  const loginFlow = config.loginFlow ?? ({} as TLoginFlow);
+  const signupFlow = config.signupFlow ?? ({} as TSignupFlow);
 
-  const loginFlow = (hasLoginFn ? { login } : login) as AuthMutationFlow;
-  const signupFlow = (hasSignupFn ? { signup } : signup) as AuthMutationFlow;
+  if ('login' in loginFlow) {
+    throw new Error('[better-react-query-auth] `login` is a reserved `loginFlow` key.');
+  }
 
-  const hasResolvers = 'resolvers' in config;
-  const resolvers = hasResolvers ? (config.resolvers as PartialAuthResolvers) : DEFAULT_RESOLVERS;
+  if ('signup' in signupFlow) {
+    throw new Error('[better-react-query-auth] `signup` is a reserved `signupFlow` key.');
+  }
 
-  const { login: loginResolver = 'login', signup: signupResolver = 'signup' } = {
-    ...DEFAULT_RESOLVERS,
-    ...resolvers,
+  const useUser = (options: QueryOptions<TUser | null> = {}) => {
+    return useQuery({
+      queryKey: userKey,
+      queryFn: user,
+      ...options,
+    });
   };
 
-  const loginHooks = mutationHooksForFlow(loginFlow, {
-    userKey,
-    resolver: loginResolver,
-  }) as AuthActionHooks<T, 'login'>;
-
-  const signupHooks = mutationHooksForFlow(signupFlow, {
-    userKey,
-    resolver: signupResolver,
-  }) as AuthActionHooks<U, 'signup'>;
-
   return {
-    ...loginHooks,
-    ...signupHooks,
+    userKey,
+    useUser,
 
-    useLogout: (options = {}) => {
+    ...mutationHooksForFlow(loginFlow, LOGIN),
+    ...mutationHooksForFlow(signupFlow, SIGNUP),
+
+    useLogin: (options: MutationOptions<TUser, TLogin> = {}) => {
       const queryClient = useQueryClient();
 
-      const setUser = useCallback(
-        (data: unknown) => queryClient?.setQueryData(userKey, data),
-        [queryClient],
-      );
+      const setUser = (user: TUser) => queryClient.setQueryData(userKey, user);
 
       return useMutation({
-        mutationKey: [...userKey, 'logout'],
-        mutationFn: logout,
+        mutationFn: login,
         ...options,
-        onSuccess(data, ...rest) {
-          setUser(null);
-          options.onSuccess?.(data, ...rest);
+        onSuccess: (data, ...rest) => {
+          setUser(data);
+          options?.onSuccess?.(data, ...rest);
         },
       });
     },
 
-    useUser: (options = {}) => {
-      return useQuery({
-        queryKey: userKey,
-        queryFn: user,
+    useSignup: (options: MutationOptions<TUser, TSignup> = {}) => {
+      const queryClient = useQueryClient();
+
+      const setUser = (user: TUser) => queryClient.setQueryData(userKey, user);
+
+      return useMutation({
+        mutationFn: signup,
         ...options,
+        onSuccess: (data, ...rest) => {
+          setUser(data);
+          options?.onSuccess?.(data, ...rest);
+        },
       });
     },
-  } as AuthHooks<T, U, V, W>;
+
+    useLogout: (options: MutationOptions = {}) => {
+      const queryClient = useQueryClient();
+
+      const setUser = (user: null) => queryClient.setQueryData(userKey, user);
+
+      return useMutation({
+        mutationFn: logout,
+        ...options,
+        onSuccess: (...args) => {
+          setUser(null);
+          options?.onSuccess?.(...args);
+        },
+      });
+    },
+
+    AuthLoader: ({
+      options,
+      children,
+      renderLoading,
+      renderUnauthenticated,
+      renderError = (error: Error) => <>{JSON.stringify(error)}</>,
+    }: AuthLoaderProps<TUser>) => {
+      const { data, error, status, isFetched, isSuccess } = useUser(options);
+
+      if (isSuccess) {
+        if (renderUnauthenticated && !data) {
+          return renderUnauthenticated();
+        }
+
+        return children;
+      }
+
+      if (!isFetched) {
+        return renderLoading();
+      }
+
+      if (status === 'error') {
+        return renderError(error);
+      }
+
+      return null;
+    },
+  };
 }
