@@ -2,6 +2,11 @@
   "name": "better-react-query-auth",
   "private": false,
   "version": "0.0.0",
+  "license": "MIT",
+  "repository": "github:sina-byn/better-react-query-auth",
+  "homepage": "https://github.com/sina-byn/better-react-query-auth",
+  "author": "Sina Bayandorian <sina.sina.bayan@protonmail.com> (https://sina-byn.vercel.app/)",
+  "description": "Type-safe authentication hooks for React with TanStack Query. Extensible auth flows, automatic cache management, and minimal boilerplate.",
   "type": "module",
   "module": "./dist/better-react-query-auth.js",
   "types": "./dist/better-react-query-auth.d.ts",
@@ -31,11 +36,9 @@
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",
-    "react": "^19.0.0"
+    "react": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.90.12",
-    "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
@@ -56,5 +59,19 @@
     "vite": "^7.2.4",
     "vite-plugin-dts": "^4.5.4"
   },
-  "license": "MIT"
+  "bugs": {
+    "url": "https://github.com/sina-byn/better-react-query-auth/issues",
+    "email": "sina.sina.bayan@protonmail.com"
+  },
+  "keywords": [
+    "react",
+    "react-query",
+    "tanstack-query",
+    "authentication",
+    "auth",
+    "hooks",
+    "typescript",
+    "auth-flow",
+    "type-safe"
+  ]
 }
