@@ -18,8 +18,8 @@ export function createAuthHooks<
   TUser extends unknown,
   TLogin,
   TSignup,
-  TLoginFlow extends MutationFlow = never,
-  TSignupFlow extends MutationFlow = never,
+  TLoginFlow extends MutationFlow = {},
+  TSignupFlow extends MutationFlow = {},
 >(config: AuthConfig<TUser, TLogin, TSignup, TLoginFlow, TSignupFlow>) {
   const { user, login, signup, logout, userKey = ['current-user'] } = config;
 

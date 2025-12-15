@@ -57,8 +57,8 @@ export type AuthConfig<
   TUser extends unknown,
   TLogin,
   TSignup,
-  TLoginFlow extends MutationFlow = never,
-  TSignupFlow extends MutationFlow = never,
+  TLoginFlow extends MutationFlow = {},
+  TSignupFlow extends MutationFlow = {},
 > = {
   user: QueryFunction<TUser | null, QueryKey>;
   login: MutationFn<TUser, TLogin>;
